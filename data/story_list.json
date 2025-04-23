@@ -1,0 +1,72 @@
+[
+  {
+    "id": "BigRunRandom",
+    "title": "Big Run Random",
+    "path": "experiments/BigRunRandom"
+  },
+  {
+    "id": "CAT WOOT",
+    "title": "Cat Story Adventure",
+    "path": "experiments/CAT WOOT"
+  },
+  {
+    "id": "GRIOT BARTENDER STORY",
+    "title": "The Griot Bartender",
+    "path": "experiments/GRIOT BARTENDER STORY"
+  },
+  {
+    "id": "rolands_story",
+    "title": "Roland's Tale",
+    "path": "experiments/rolands_story"
+  },
+  {
+    "id": "griotbigone",
+    "title": "The Great Griot",
+    "path": "experiments/griotbigone"
+  },
+  {
+    "id": "FelineStory",
+    "title": "Feline Story",
+    "path": "experiments/FelineStory"
+  },
+  {
+    "id": "Doric_greek",
+    "title": "Doric Greek",
+    "path": "experiments/Doric_greek"
+  },
+  {
+    "id": "CirceMelanthoGreek",
+    "title": "Circe & Melantho (Greek)",
+    "path": "experiments/CirceMelanthoGreek"
+  },
+  {
+    "id": "bigone",
+    "title": "The Big One",
+    "path": "experiments/bigone"
+  },
+  {
+    "id": "despondent1234",
+    "title": "Despondent",
+    "path": "experiments/despondent1234"
+  },
+  {
+    "id": "Cat story",
+    "title": "Cat's Tale",
+    "path": "experiments/Cat story"
+  },
+  {
+    "id": "CirceMelanthoEng",
+    "title": "Circe & Melantho (English)",
+    "path": "experiments/CirceMelanthoEng"
+  },
+  {
+    "id": "GRIOT CAT STORY",
+    "title": "Griot Cat Story",
+    "path": "experiments/GRIOT CAT STORY"
+  },
+  {
+    "id": "detective",
+    "title": "Detective Mystery",
+    "path": "experiments/detective"
+  }
+] 

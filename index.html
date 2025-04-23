@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Story Explorer</title>
+  <!-- Add marked.js library for markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* page layout & bg */
+    body {
+      display: flex;
+      margin: 0;
+      font-family: Georgia, serif;
+      color: #333;
+      background-color: #fafafa;
+    }
+
+    /* sidebar */
+    #sidebar {
+      width: 250px;
+      border-right: 1px solid #ccc;
+      padding: 1em;
+      padding-bottom: 8em;
+      background: #fff;
+      height: 100vh;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    #sidebar a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+    #sidebar a:hover {
+      text-decoration: underline;
+    }
+    #story-list {
+      margin-bottom: 2em;
+      padding-bottom: 1em;
+    }
+    #story-list a {
+      display: block;
+      padding: 0.25em 0;
+    }
+    #story-list li:last-child {
+      margin-bottom: 1em;
+    }
+    
+    /* story navigation */
+    .story-nav {
+      margin-top: 1.5em;
+      border-top: 1px solid #eee;
+      padding-top: 1em;
+    }
+    .story-nav h4 {
+      margin-top: 0;
+    }
+    .story-nav a {
+      display: block;
+      padding: 0.25em 0;
+      margin-left: 1em;
+    }
+
+    /* content area */
+    #content {
+      flex: 1;
+      padding: 2em;
+      max-width: 800px;
+      margin: 1em auto;
+      background-color: #fff;
+      border-radius: 4px;
+      line-height: 1.6;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    #content p {
+      margin-bottom: 1em;
+      text-align: justify;
+    }
+    #content pre {
+      background: #f4f4f4;
+      padding: 1em;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: Menlo, monospace;
+      margin-bottom: 1em;
+    }
+    #content code {
+      background: #f4f4f4;
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-family: Menlo, monospace;
+      font-size: 0.9em;
+    }
+    #content blockquote {
+      margin: 1em 0;
+      padding-left: 1em;
+      border-left: 4px solid #eee;
+      color: #666;
+    }
+    #content img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 1.5em auto;
+      border: 1px solid #eee;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    #content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 1em;
+    }
+    #content th, #content td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    #content th {
+      background-color: #f4f4f4;
+      text-align: left;
+    }
+    #content h1, #content h2, #content h3, 
+    #content h4, #content h5, #content h6 {
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    /* add a bit of spacing for the prompt */
+    .story-prompt-init, .story-prompt-update {
+      margin: 0 0 1.5em;
+      font-style: italic;
+      color: #555;
+      padding: 1em;
+      background-color: #f9f9f9;
+      border-left: 4px solid #ddd;
+    }
+    
+    .story-personality {
+      margin-bottom: 0.5em;
+    }
+    
+    /* Story section styling */
+    .story-section {
+      margin-bottom: 3em;
+      padding-bottom: 2em;
+      border-bottom: 3px solid #eee;
+      position: relative;
+    }
+    
+    .story-variant-personality {
+      font-style: italic;
+      color: #555;
+      margin-bottom: 1.5em;
+      padding: 0.8em;
+      background-color: #f0f7ff;
+      border-left: 4px solid #0066cc;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .section-title {
+      font-weight: bold;
+      color: #444;
+      margin-top: 2em;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.5em;
+      color: #0066cc;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    /* Story navigation indicators */
+    .story-section-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2em;
+    }
+    
+    .nav-button {
+      display: inline-block;
+      padding: 0.5em 1em;
+      color: #0066cc;
+      text-decoration: none;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+    
+    .nav-button:hover {
+      background-color: #f0f7ff;
+    }
+    
+    /* Generation styling */
+    .generation-header {
+      margin-top: 2em;
+      padding-top: 1em;
+      border-top: 2px solid #0066cc;
+      color: #0066cc;
+    }
+    
+    .personality-story-pair {
+      margin-bottom: 2em;
+      padding-bottom: 1em;
+      border-bottom: 1px dashed #ddd;
+    }
+    
+    .personality-story-pair:last-child {
+      border-bottom: none;
+    }
+    
+    /* Graphs and visualizations */
+    .graphs-container {
+      margin-top: 2em;
+      padding: 1em;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+    }
+    
+    .graph-item {
+      margin-bottom: 2em;
+    }
+    
+    .graph-title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 0.5em;
+      color: #444;
+    }
+    
+    .graph-description {
+      text-align: center;
+      font-style: italic;
+      margin-bottom: 1em;
+      color: #666;
+    }
+    
+    .graphs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5em;
+      margin-top: 2em;
+    }
+  </style>
+</head>
+<body>
+  <nav id="sidebar">
+    <h3>Stories</h3>
+    <ul id="story-list">
+      <!-- populated by JS -->
+    </ul>
+    <div id="story-subnav" class="story-nav">
+      <!-- populated by JS when story is selected -->
+    </div>
+  </nav>
+  <main id="content">
+    <p>Select a story from the list.</p>
+  </main>
+
+  <script>
+    // Configure marked options for markdown parsing
+    marked.setOptions({
+      breaks: true,       // Convert line breaks to <br>
+      gfm: true,          // Use GitHub Flavored Markdown
+      headerIds: true,    // Add IDs to headings
+      smartLists: true,   // Use smarter list behavior
+      xhtml: false        // Use XHTML compatible tags
+    });
+    
+    // Helper function to safely parse markdown
+    function parseMarkdown(text) {
+      try {
+        return marked.parse(text);
+      } catch (e) {
+        console.error('Error parsing markdown:', e);
+        return text; // Fallback to plain text if parsing fails
+      }
+    }
+    
+    // Map of folder names to nicer display names
+    const folderNameMap = {
+      'BigRunRandom': 'Adventure in the City',
+      'CAT WOOT': 'The Feline Escapade',
+      'GRIOT BARTENDER STORY': 'Tales from the Tavern',
+      'rolands_story': 'Roland\'s Quest',
+      'griotbigone': 'The Epic Chronicle',
+      'FelineStory': 'Feline Story',
+      'Doric_greek': 'Ancient Doric Tales',
+      'CirceMelanthoGreek': 'Circe & Melantho (Greek)',
+      'bigone': 'The Grand Saga',
+      'despondent1234': 'Journey through Melancholy',
+      'Cat story': 'The Cat\'s Tale',
+      'CirceMelanthoEng': 'Circe & Melantho (English)',
+      'GRIOT CAT STORY': 'The Griot\'s Cat',
+      'detective': 'The Mystery Case'
+    };
+    
+    // Map of graph file names to descriptive titles and descriptions
+    const graphDescriptions = {
+      'between_gen_similarity_matrix0.png': {
+        title: 'Between Generation Similarity Matrix',
+        description: 'Shows how similar stories are between different generations'
+      },
+      'creativity_evolution.png': {
+        title: 'Creativity Evolution',
+        description: 'Tracks how creativity metrics change across generations'
+      },
+      'generation_similarities_graph0.png': {
+        title: 'Generation Similarities Graph',
+        description: 'Network visualization of similarity between generations'
+      },
+      'positivity_evolution.png': {
+        title: 'Positivity Evolution',
+        description: 'Shows how the positivity sentiment changes over generations'
+      },
+      'similarity_first_gen.png': {
+        title: 'First Generation Similarity',
+        description: 'Similarity metrics for stories in the first generation'
+      },
+      'stories_similarity_matrix0.png': {
+        title: 'Stories Similarity Matrix',
+        description: 'Heatmap showing similarity between all story variants'
+      },
+      'subjectivity_evolution.png': {
+        title: 'Subjectivity Evolution',
+        description: 'Tracks how subjective vs. objective the text becomes across generations'
+      },
+      'successive_similarity.png': {
+        title: 'Successive Similarity',
+        description: 'Similarity between consecutive generations'
+      },
+      'within_gen_similarity.png': {
+        title: 'Within Generation Similarity',
+        description: 'How similar stories are within the same generation'
+      },
+      'wordchains0.png': {
+        title: 'Word Chains',
+        description: 'Visualization of word patterns and transitions in the stories'
+      }
+    };
+    
+    // Keep track of the currently loaded story data
+    let currentStoryData = null;
+    let currentStoryFile = null;
+    let currentStoryPath = null;
+    let currentStoryDir = null;
+    
+    // Keep a cache of which images exist to avoid redundant HEAD requests
+    const imageExistsCache = new Map();
+    
+    // Cache of story file loading
+    const storyDataCache = new Map();
+    
+    // Utility to get base URL that works in different environments (local, GitHub Pages, etc.)
+    function getBaseUrl() {
+      return window.location.pathname.endsWith('/') ? 
+             window.location.pathname : 
+             window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+    }
+
+    // Load directory listing of stories
+    async function loadStoryDirectories() {
+      try {
+        const baseUrl = getBaseUrl();
+        // First try to load from data/story_list.json
+        try {
+          const response = await fetch(`${baseUrl}data/story_list.json`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Successfully loaded story list from data/story_list.json");
+            return data;
+          }
+        } catch (error) {
+          console.warn("Could not load from data/story_list.json, falling back to stories/index.json", error);
+        }
+
+        // Fallback to the original location
+        const fallbackResponse = await fetch(`${baseUrl}stories/index.json`);
+        if (fallbackResponse.ok) {
+          const fileNames = await fallbackResponse.json();
+          console.log("Successfully loaded story list from stories/index.json");
+          
+          // Convert simple array to structured format
+          return fileNames.map(fileName => ({
+            id: fileName.replace('.json', ''),
+            title: fileName.replace('.json', '').replace(/_/g, ' '),
+            path: `stories/${fileName.replace('.json', '')}`
+          }));
+        } else {
+          throw new Error(`Failed to load story list: ${fallbackResponse.status}`);
+        }
+      } catch (error) {
+        console.error('Error loading story directories:', error);
+        return [];
+      }
+    }
+    
+    // Find a JSON file in a directory
+    async function findJsonFile(dirPath) {
+      try {
+        // Static mappings for GitHub Pages (maps folder names to JSON files)
+        const staticJsonMap = {
+          // Add mappings for folders with specific JSON files if needed
+          // 'experiments/CAT WOOT': 'output0.json'
+        };
+        
+        // Check if we have a static mapping
+        if (staticJsonMap[dirPath]) {
+          return staticJsonMap[dirPath];
+        }
+        
+        try {
+          const baseUrl = getBaseUrl();
+          // Try to access the directory listing
+          const response = await fetch(`${baseUrl}${dirPath}/`);
+          
+          if (response.ok) {
+            const html = await response.text();
+            
+            // Parse HTML to find JSON files
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Find all JSON files
+            const jsonLinks = Array.from(doc.querySelectorAll('a')).filter(a => {
+              const href = a.getAttribute('href');
+              return href && href.endsWith('.json');
+            });
+            
+            // Return the first JSON file or null if none found
+            if (jsonLinks.length > 0) {
+              return jsonLinks[0].getAttribute('href');
+            }
+          }
+        } catch (e) {
+          console.log('Directory listing failed, trying default output0.json');
+        }
+        
+        // Default to output0.json if directory listing doesn't work
+        // First check if the file exists
+        try {
+          const baseUrl = getBaseUrl();
+          const checkResponse = await fetch(`${baseUrl}${dirPath}/output0.json`, { method: 'HEAD' });
+          if (checkResponse.ok) {
+            return 'output0.json';
+          }
+        } catch (e) {
+          console.log('Default output0.json not found');
+        }
+        
+        return null;
+      } catch (error) {
+        console.error(`Error finding JSON file in ${dirPath}:`, error);
+        return null;
+      }
+    }
+    
+    async function getStoryFolders() {
+      const storyData = await loadStoryDirectories();
+      if (!Array.isArray(storyData)) {
+        console.error("Story data is not an array:", storyData);
+        return [];
+      }
+      
+      return storyData.map(story => ({
+        path: story.path,
+        displayName: story.title || folderNameMap[story.id] || story.id.replace(/_/g, ' ')
+      }));
+    }
+    
+    async function loadIndex() {
+      try {
+        // Get the list of story directories
+        const storyFolders = await getStoryFolders();
+        
+        // Create the sidebar list
+        const ul = document.getElementById('story-list');
+        ul.innerHTML = ''; // Clear existing entries
+        
+        // Add each story folder to the list
+        for (const folder of storyFolders) {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = '#' + encodeURIComponent(folder.path);
+          a.textContent = folder.displayName;
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.hash = encodeURIComponent(folder.path);
+          });
+          li.appendChild(a);
+          ul.appendChild(li);
+        }
+        
+        // Check if hash exists and load that story
+        if (window.location.hash) {
+          const storyPath = decodeURIComponent(window.location.hash.substring(1));
+          if (storyPath.includes('/generation-')) {
+            // Format is #folderpath/generation-X
+            const [folderPath, section] = storyPath.split('/generation-');
+            await loadStory(folderPath, 'generation-' + section);
+          } else {
+            // Just load the main story page
+            await loadStory(storyPath);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading index:", error);
+        document.getElementById('content').innerHTML = 
+          `<p>Error loading story index: ${error.message}</p>`;
+      }
+    }
+
+    async function loadStory(folderPath, section = null) {
+      if (!folderPath) return;
+      
+      try {
+        currentStoryDir = folderPath;
+        
+        // Find a JSON file in the directory
+        const jsonFile = await findJsonFile(folderPath);
+        
+        if (!jsonFile) {
+          throw new Error(`No JSON file found in ${folderPath}`);
+        }
+        
+        currentStoryFile = jsonFile;
+        const baseUrl = getBaseUrl();
+        currentStoryPath = `${baseUrl}${folderPath}/${jsonFile}`;
+        
+        // Use cache if available
+        let data;
+        if (storyDataCache.has(currentStoryPath)) {
+          data = storyDataCache.get(currentStoryPath);
+        } else {
+          const response = await fetch(currentStoryPath);
+          if (!response.ok) throw new Error(`Error loading story: ${response.status}`);
+          data = await response.json();
+          storyDataCache.set(currentStoryPath, data);
+        }
+        
+        currentStoryData = data;
+        
+        // Update the navigation sidebar
+        updateStoryNav(folderPath, data);
+        
+        // If a specific section is requested, show that
+        if (section) {
+          showStorySection(data, section);
+          return;
+        }
+        
+        // Otherwise show the main story overview
+        showStoryOverview(data, folderPath);
+      } catch (error) {
+        console.error("Error loading story:", error);
+        document.getElementById('content').innerHTML = 
+          `<p>Error loading story from ${folderPath}: ${error.message}</p>`;
+      }
+    }
+    
+    function updateStoryNav(folderPath, data) {
+      const nav = document.getElementById('story-subnav');
+      nav.innerHTML = '';
+      
+      // Only create subnav if we have a story selected
+      if (!folderPath) return;
+      
+      const header = document.createElement('h4');
+      header.textContent = 'Sections';
+      nav.appendChild(header);
+      
+      // Add link to main overview
+      const overviewLink = document.createElement('a');
+      overviewLink.href = '#' + encodeURIComponent(folderPath);
+      overviewLink.textContent = 'Overview';
+      overviewLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.hash = encodeURIComponent(folderPath);
+      });
+      nav.appendChild(overviewLink);
+      
+      // Add links to each generation if they exist
+      if (Array.isArray(data.stories) && data.stories.length) {
+        for (let i = 0; i < data.stories.length; i++) {
+          const genLink = document.createElement('a');
+          genLink.href = '#' + encodeURIComponent(folderPath) + '/generation-' + i;
+          genLink.textContent = `Generation ${i+1}`;
+          genLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.hash = encodeURIComponent(folderPath) + '/generation-' + i;
+          });
+          nav.appendChild(genLink);
+        }
+      }
+    }
+    
+    // Check if an image exists from cache or by doing an actual HEAD request
+    async function checkImageExists(url) {
+      // Check cache first
+      if (imageExistsCache.has(url)) {
+        return imageExistsCache.get(url);
+      }
+      
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        const exists = response.ok;
+        imageExistsCache.set(url, exists); // Cache the result
+        return exists;
+      } catch (e) {
+        imageExistsCache.set(url, false); // Cache the failed result
+        return false;
+      }
+    }
+    
+    // Load and display the graphs for a story
+    async function loadGraphs(storyDir, contentElement) {
+      // Create the main container for graphs
+      const graphsContainer = document.createElement('div');
+      graphsContainer.className = 'graphs-container';
+      
+      // Create a section title for the graphs
+      const graphsTitle = document.createElement('h3');
+      graphsTitle.textContent = 'Story Analysis & Visualizations';
+      graphsContainer.appendChild(graphsTitle);
+      
+      // Create the grid for the graphs
+      const graphsGrid = document.createElement('div');
+      graphsGrid.className = 'graphs-grid';
+      
+      // List to hold promises for checking all images
+      const checkPromises = [];
+      const graphItems = [];
+      
+      // Check each image and create its container
+      for (const [graphFile, info] of Object.entries(graphDescriptions)) {
+        const baseUrl = getBaseUrl();
+        const graphUrl = `${baseUrl}${storyDir}/${graphFile}`;
+        
+        // Create a promise for checking if this image exists
+        checkPromises.push(
+          checkImageExists(graphUrl).then(exists => {
+            if (exists) {
+              // Create the graph item
+              const graphItem = document.createElement('div');
+              graphItem.className = 'graph-item';
+              
+              // Add the title
+              const titleEl = document.createElement('div');
+              titleEl.className = 'graph-title';
+              titleEl.textContent = info.title;
+              graphItem.appendChild(titleEl);
+              
+              // Add the description
+              const descEl = document.createElement('div');
+              descEl.className = 'graph-description';
+              descEl.textContent = info.description;
+              graphItem.appendChild(descEl);
+              
+              // Add the image (preload it)
+              const img = new Image();
+              img.src = graphUrl;
+              img.alt = info.title;
+              img.title = info.description;
+              graphItem.appendChild(img);
+              
+              // Add to our collection
+              graphItems.push(graphItem);
+            }
+          })
+        );
+      }
+      
+      // Wait for all image checks to complete
+      await Promise.all(checkPromises);
+      
+      // If we found any images, add them to the page
+      if (graphItems.length > 0) {
+        // Add each graph item to the grid
+        graphItems.forEach(item => graphsGrid.appendChild(item));
+        
+        // Add the grid to the container
+        graphsContainer.appendChild(graphsGrid);
+        
+        // Add the container to the page
+        contentElement.appendChild(graphsContainer);
+      }
+    }
+    
+    async function showStoryOverview(data, folderPath) {
+      const c = document.getElementById('content');
+      c.innerHTML = '';
+
+      // -- Title - use the folder name as the title or use mapping if available
+      const folderName = folderPath.split('/').pop();
+      const displayName = folderNameMap[folderName] || folderName.replace(/_/g, ' ');
+      
+      const h2 = document.createElement('h2');
+      h2.textContent = data.title || displayName;
+      c.appendChild(h2);
+
+      // -- Initial prompt
+      if (Array.isArray(data.prompt_init) && data.prompt_init.length) {
+        const promptTitle = document.createElement('div');
+        promptTitle.className = 'section-title';
+        promptTitle.textContent = 'Initial Prompt:';
+        c.appendChild(promptTitle);
+        
+        const div = document.createElement('div');
+        div.className = 'story-prompt-init';
+        div.innerHTML = parseMarkdown(data.prompt_init[0]);
+        c.appendChild(div);
+      }
+      
+      // -- Update prompt
+      if (Array.isArray(data.prompt_update) && data.prompt_update.length) {
+        const promptTitle = document.createElement('div');
+        promptTitle.className = 'section-title';
+        promptTitle.textContent = 'Update Prompt:';
+        c.appendChild(promptTitle);
+        
+        const div = document.createElement('div');
+        div.className = 'story-prompt-update';
+        div.innerHTML = parseMarkdown(data.prompt_update[0]);
+        c.appendChild(div);
+      }
+      
+      // -- Personality list
+      if (Array.isArray(data.personality_list) && data.personality_list.length) {
+        const persTitle = document.createElement('div');
+        persTitle.className = 'section-title';
+        persTitle.textContent = 'Personality List:';
+        c.appendChild(persTitle);
+        
+        const list = document.createElement('ul');
+        data.personality_list.forEach((personality, index) => {
+          const item = document.createElement('li');
+          item.className = 'story-personality';
+          item.innerHTML = parseMarkdown(personality);
+          list.appendChild(item);
+        });
+        c.appendChild(list);
+      }
+      
+      // Add graphs and visualizations
+      await loadGraphs(folderPath, c);
+      
+      // Note: Generation navigation links have been removed
+      // Users will navigate using the sidebar instead
+    }
+    
+    function showStorySection(data, section) {
+      const c = document.getElementById('content');
+      c.innerHTML = '';
+      
+      // Add back link
+      const backLink = document.createElement('a');
+      backLink.href = '#' + encodeURIComponent(currentStoryDir);
+      backLink.className = 'back-link';
+      backLink.textContent = '← Back to Overview';
+      backLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.hash = encodeURIComponent(currentStoryDir);
+      });
+      c.appendChild(backLink);
+      
+      // -- Title - use the folder name as the title or mapping if available
+      const folderName = currentStoryDir.split('/').pop();
+      const displayName = folderNameMap[folderName] || folderName.replace(/_/g, ' ');
+      
+      const h2 = document.createElement('h2');
+      h2.textContent = data.title || displayName;
+      c.appendChild(h2);
+      
+      // Show the generation
+      if (section.startsWith('generation-')) {
+        const genIndex = parseInt(section.replace('generation-', ''));
+        if (Array.isArray(data.stories) && genIndex < data.stories.length) {
+          const generation = data.stories[genIndex];
+          
+          // Create a header for this generation
+          const genHeader = document.createElement('h3');
+          genHeader.className = 'generation-header';
+          genHeader.textContent = `Generation ${genIndex+1}`;
+          c.appendChild(genHeader);
+          
+          // For each story in this generation, pair it with the corresponding personality
+          if (Array.isArray(generation) && Array.isArray(data.personality_list)) {
+            generation.forEach((storyText, index) => {
+              if (index < data.personality_list.length) {
+                // Create a container for this personality-story pair
+                const pairDiv = document.createElement('div');
+                pairDiv.className = 'personality-story-pair';
+                
+                // Add the personality
+                const personalityDiv = document.createElement('div');
+                personalityDiv.className = 'story-variant-personality';
+                personalityDiv.innerHTML = `<strong>Personality:</strong> ${parseMarkdown(data.personality_list[index])}`;
+                pairDiv.appendChild(personalityDiv);
+                
+                // Add the story text
+                const storyDiv = document.createElement('div');
+                storyDiv.innerHTML = parseMarkdown(storyText);
+                pairDiv.appendChild(storyDiv);
+                
+                // Add the pair to the content
+                c.appendChild(pairDiv);
+              }
+            });
+          }
+          
+          // Add navigation between generations
+          if (data.stories.length > 1) {
+            const navDiv = document.createElement('div');
+            navDiv.className = 'story-section-nav';
+            
+            // Previous generation button
+            if (genIndex > 0) {
+              const prevLink = document.createElement('a');
+              prevLink.href = `#${encodeURIComponent(currentStoryDir)}/generation-${genIndex-1}`;
+              prevLink.className = 'nav-button';
+              prevLink.textContent = '← Previous Generation';
+              prevLink.addEventListener('click', (e) => {
+                if (e.preventDefault) e.preventDefault();
+              });
+              navDiv.appendChild(prevLink);
+            } else {
+              // Empty div for spacing
+              const spacer = document.createElement('div');
+              navDiv.appendChild(spacer);
+            }
+            
+            // Next generation button
+            if (genIndex < data.stories.length - 1) {
+              const nextLink = document.createElement('a');
+              nextLink.href = `#${encodeURIComponent(currentStoryDir)}/generation-${genIndex+1}`;
+              nextLink.className = 'nav-button';
+              nextLink.textContent = 'Next Generation →';
+              nextLink.addEventListener('click', (e) => {
+                if (e.preventDefault) e.preventDefault();
+              });
+              navDiv.appendChild(nextLink);
+            } else {
+              // Empty div for spacing
+              const spacer = document.createElement('div');
+              navDiv.appendChild(spacer);
+            }
+            
+            c.appendChild(navDiv);
+          }
+        } else {
+          c.innerHTML += '<p>Generation not found.</p>';
+        }
+      } else {
+        c.innerHTML += '<p>Section not found.</p>';
+      }
+    }
+
+    // Initialize
+    window.addEventListener('hashchange', function() {
+      if (window.location.hash) {
+        const storyPath = decodeURIComponent(window.location.hash.substring(1));
+        if (storyPath.includes('/generation-')) {
+          // Format is #folderpath/generation-X
+          const [folderPath, section] = storyPath.split('/generation-');
+          loadStory(folderPath, 'generation-' + section);
+        } else {
+          // Just load the main story page
+          loadStory(storyPath);
+        }
+      }
+    });
+    
+    // initialize
+    loadIndex();
+  </script>
+</body>
+</html>
