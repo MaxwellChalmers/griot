@@ -68,5 +68,10 @@
     "id": "detective",
     "title": "Detective Mystery",
     "path": "experiments/detective"
+  },
+  {
+    "id": "asdfasdfasdf",
+    "title": "Mirror World",
+    "path": "experiments/asdfasdfasdf"
   }
 ] 
